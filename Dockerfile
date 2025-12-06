@@ -1,24 +1,22 @@
-# Stage 1: Build
+# Stage 1: Build React App
 FROM node:18-alpine AS builder
 WORKDIR /app
-ENV PATH /app/node_modules/.bin:$PATH
+ENV PATH=/app/node_modules/.bin:$PATH
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
-# Install dependencies
-COPY package.json package-lock.json ./
-RUN npm install
+COPY package*.json ./
+RUN npm ci
 
-# Copy source code
-COPY . ./
-
-# Build React app
+COPY . .
 RUN npm run build
 
-# Stage 2: Serve with NGINX
-FROM nginx:alpine
+# Stage 2: Serve with Nginx
+FROM nginx:stable-alpine
+
+# Copy build to nginx
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# Optional: copy custom NGINX config
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
+# Expose port
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
